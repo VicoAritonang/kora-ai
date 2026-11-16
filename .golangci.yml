@@ -1,0 +1,56 @@
+# Lint configuration. depguard enforces the module boundaries D1–D8
+# (PROJECT_STRUCTURE §2); a violation fails CI.
+version: "2"
+linters:
+  enable: [depguard, errcheck, govet, ineffassign, staticcheck, unused, misspell, bodyclose]
+  settings:
+    depguard:
+      rules:
+        domain:          # D1: domain imports no internal package and no I/O
+          files: ["**/internal/domain/**"]
+          deny:
+            - { pkg: "github.com/koraai/koraai/internal", desc: "domain must not import internal packages" }
+            - { pkg: "net/http", desc: "domain does no I/O" }
+            - { pkg: "database/sql", desc: "domain does no I/O" }
+        ports:           # D2
+          files: ["**/internal/ports/**"]
+          allow: ["$gostd", "github.com/google/uuid", "github.com/koraai/koraai/internal/domain"]
+        packagebuilder:  # D3: pure; no clock, no network
+          files: ["**/internal/packagebuilder/**"]
+          allow: ["$gostd", "github.com/google/uuid", "github.com/koraai/koraai/internal/domain"]
+          deny:
+            - { pkg: "net", desc: "packagebuilder is pure" }
+            - { pkg: "context", desc: "packagebuilder is pure" }
+        application:     # D4: application modules never import adapters
+          files:
+            - "**/internal/pipeline/**"
+            - "**/internal/agent/**"
+            - "**/internal/tools/**"
+            - "**/internal/session/**"
+            - "**/internal/conversation/**"
+            - "**/internal/packages/**"
+            - "**/internal/priceindex/**"
+            - "**/internal/costnorm/**"
+            - "**/internal/reminder/**"
+            - "**/internal/auth/**"
+            - "**/internal/usage/**"
+            - "**/internal/account/**"
+            - "**/internal/verifier/**"
+            - "**/internal/jobs/**"
+          deny:
+            - { pkg: "github.com/koraai/koraai/internal/adapters", desc: "D4: use ports, wire adapters in app/" }
+            - { pkg: "github.com/koraai/koraai/internal/transport", desc: "application modules do not know HTTP" }
+        adapters:        # D5: adapters import ports+domain, not each other or app modules
+          files: ["**/internal/adapters/**", "!**/internal/adapters/tracerpg/**"]
+          deny:
+            - { pkg: "github.com/koraai/koraai/internal/pipeline", desc: "D5" }
+            - { pkg: "github.com/koraai/koraai/internal/agent", desc: "D5" }
+            - { pkg: "github.com/koraai/koraai/internal/store", desc: "D5 (tracerpg is the documented exception)" }
+            - { pkg: "github.com/koraai/koraai/internal/app", desc: "D5" }
+        transport:       # D7: handlers call application modules only
+          files: ["**/internal/transport/**"]
+          deny:
+            - { pkg: "github.com/koraai/koraai/internal/adapters", desc: "D7" }
+            - { pkg: "github.com/koraai/koraai/internal/pipeline", desc: "D7: go through conversation" }
+formatters:
+  enable: [gofumpt, goimports]

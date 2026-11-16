@@ -1,0 +1,63 @@
+# Kora guardrails policy, layered over the engine's balanced profile
+# (guard-rails-engine config/policies/balanced.yaml). Only overrides live here.
+version: "kora-0.1.0"
+name: kora-balanced
+description: >
+  Balanced profile for a consumer travel planner. PII is masked before any
+  model sees it and restored on the way out; injection and credentials are
+  blocked; tools are default-deny to the agent catalog. Kora's own run limits
+  (AI_SYSTEM_DESIGN §5) stay the last line of defence.
+
+guards:
+  pii:
+    enabled: true   # required: an overlay block without it DISABLES the guard (engine merge sets Enabled from the overlay)
+    params:
+      mask_mode: vault
+      restore_outbound: true
+      detect_indonesian: true
+
+  # Default-deny: only the agent's own tools may run.
+  tool_policy:
+    enabled: true   # required: an overlay block without it DISABLES the guard (engine merge sets Enabled from the overlay)
+    params:
+      allow:
+        - search_flights
+        - search_stays
+        - search_activities
+        - kg_query
+        - get_user_memory
+        - web_research
+        - propose_day_plan
+        - build_packages
+        - present_to_user
+      deny: []
+      block_private_urls: true
+      scan_arguments: true
+
+  # At least as strict as Kora's run limits (12 steps, $0.30 per run).
+  loop_breaker:
+    enabled: true   # required: an overlay block without it DISABLES the guard (engine merge sets Enabled from the overlay)
+    params:
+      max_steps: 30
+      max_repeats: 4
+      repeat_window: 8
+
+  budget_breaker:
+    enabled: true   # required: an overlay block without it DISABLES the guard (engine merge sets Enabled from the overlay)
+    params:
+      max_trace_cost_usd: 0.30
+
+  quota:
+    enabled: true   # required: an overlay block without it DISABLES the guard (engine merge sets Enabled from the overlay)
+    params:
+      max_input_tokens: 60000
+      max_messages: 60
+      max_message_chars: 16000
+      max_cost_usd: 0.30
+
+  # Narration may link only to offer URLs; no markdown images to arbitrary
+  # hosts (exfiltration). Data URLs are blocked by default.
+  format:
+    enabled: true   # required: an overlay block without it DISABLES the guard (engine merge sets Enabled from the overlay)
+    params:
+      block_data_urls: true

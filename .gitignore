@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+eval/reports/*
+!eval/reports/.gitkeep
+web/node_modules
+web/.next
+*.tsbuildinfo
+/bin
+
+# SSH keys never belong in the repo
+*.pem

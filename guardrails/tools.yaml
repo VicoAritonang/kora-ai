@@ -1,0 +1,122 @@
+# Tool catalog for guard-rails-engine (AI_SYSTEM_DESIGN §9.1, point 3).
+# The Runtime stage refuses any tool it cannot grade, so every agent tool is
+# listed. All Kora tools only read or compute: nothing here moves money or
+# sends messages, so every tool is reversibility "none".
+version: "1"
+extends: builtin
+tools:
+  - name: search_flights
+    description: Search round-trip flight offers from the flight supplier.
+    domain: travel
+    reversibility: none
+    radius: self
+    egress: false
+    capability: travel:search
+    rationale: Read-only supplier search; offer text is third-party content.
+    params:
+      - { name: origin, type: string, required: true, max_len: 8 }
+      - { name: destination, type: string, required: true, max_len: 8 }
+      - { name: depart_date, type: string, required: true, max_len: 10 }
+      - { name: return_date, type: string, required: true, max_len: 10 }
+      - { name: max_stops, type: integer }
+      - { name: cabin, type: string, enum: [economy, premium_economy, business] }
+
+  - name: search_stays
+    description: Search accommodation offers for a city and dates.
+    domain: travel
+    reversibility: none
+    radius: self
+    egress: false
+    capability: travel:search
+    rationale: Read-only supplier search; hotel names and descriptions are third-party content.
+    params:
+      - { name: city, type: string, required: true, max_len: 8 }
+      - { name: area, type: string, max_len: 60 }
+      - { name: check_in, type: string, required: true, max_len: 10 }
+      - { name: check_out, type: string, required: true, max_len: 10 }
+      - { name: max_price_per_night_idr, type: integer }
+      - { name: min_rating, type: number }
+
+  - name: search_activities
+    description: List priced attractions and activities for a city.
+    domain: travel
+    reversibility: none
+    radius: self
+    egress: false
+    capability: travel:search
+    rationale: Read-only lookup in the curated cost norms and activity suppliers.
+    params:
+      - { name: city, type: string, required: true, max_len: 8 }
+      - { name: interests, type: array }
+
+  - name: kg_query
+    description: Retrieve travel-agent knowledge from the persona pack.
+    domain: knowledge
+    reversibility: none
+    radius: self
+    egress: false
+    capability: knowledge:read
+    rationale: Read-only retrieval from a frozen, reviewed pack.
+    params:
+      - { name: question, type: string, required: true, max_len: 400 }
+      - { name: purpose, type: string, max_len: 120 }
+
+  - name: get_user_memory
+    description: Recall durable facts the user agreed to have remembered.
+    domain: memory
+    reversibility: none
+    radius: self
+    egress: false
+    capability: memory:read
+    rationale: Reads the current user's own memory scope only.
+    params:
+      - { name: topic, type: string, required: true, max_len: 200 }
+
+  - name: web_research
+    description: Isolated web search sub-call returning facts with URLs.
+    domain: web
+    reversibility: none
+    radius: self
+    egress: false
+    capability: web:read
+    rationale: Read-only; results are untrusted web content and never become live prices.
+    params:
+      - { name: question, type: string, required: true, max_len: 400 }
+      - { name: reason, type: string, max_len: 300 }
+
+  - name: propose_day_plan
+    description: Validate and store a day-by-day itinerary by reference ids.
+    domain: planning
+    reversibility: none
+    radius: self
+    egress: false
+    capability: planning:compute
+    rationale: Pure computation over ids the run already holds.
+    params:
+      - { name: days, type: array, required: true }
+
+  - name: build_packages
+    description: Run the deterministic package builder on chosen offer ids.
+    domain: planning
+    reversibility: none
+    radius: self
+    egress: false
+    capability: planning:compute
+    rationale: Pure computation; takes ids, never prices.
+    params:
+      - { name: flight_offer_ids, type: array, required: true }
+      - { name: stay_offer_ids, type: array, required: true }
+      - { name: day_plan_id, type: string, max_len: 40 }
+
+  - name: present_to_user
+    description: Choose the canvas view and the recommended tier in the web app.
+    domain: planning
+    reversibility: none
+    radius: self
+    egress: false
+    capability: planning:compute
+    rationale: Changes what the traveller's screen shows; no effect outside the session.
+    params:
+      - { name: view, type: string, required: true, enum: [brief, flights, stays, itinerary, packages] }
+      - { name: recommend_tier, type: string, enum: [hemat, seimbang, nyaman] }
+      - { name: reason, type: string, max_len: 160 }

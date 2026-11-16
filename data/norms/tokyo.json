@@ -1,0 +1,30 @@
+{
+  "destination_code": "TYO",
+  "status": "draft_unverified",
+  "source_label": "DRAF Kora (belum diverifikasi kurator) — disusun 15 Nov 2026",
+  "verified_at": "2026-11-15",
+  "note": "Placeholder values; curator verification required (IMPLEMENTATION_PLAN P2-14).",
+  "norms": [
+    {"key": "meal.hemat", "category": "meal", "tier": "hemat", "label": "Makan hemat", "unit": "per_meal", "amount": 1000, "currency": "JPY", "child_factor": 0.6},
+    {"key": "meal.sedang", "category": "meal", "tier": "sedang", "label": "Makan sedang", "unit": "per_meal", "amount": 2000, "currency": "JPY", "child_factor": 0.6},
+    {"key": "meal.nyaman", "category": "meal", "tier": "nyaman", "label": "Makan nyaman", "unit": "per_meal", "amount": 5000, "currency": "JPY", "child_factor": 0.6},
+    {"key": "local.hemat", "category": "local_transport_daily", "tier": "hemat", "label": "Transport lokal harian (Metro, jalan kaki)", "unit": "per_day", "amount": 900, "currency": "JPY", "child_factor": 0.5},
+    {"key": "local.sedang", "category": "local_transport_daily", "tier": "sedang", "label": "Transport lokal harian (Metro + JR)", "unit": "per_day", "amount": 1300, "currency": "JPY", "child_factor": 0.5},
+    {"key": "local.nyaman", "category": "local_transport_daily", "tier": "nyaman", "label": "Transport lokal harian (termasuk taksi)", "unit": "per_day", "amount": 3500, "currency": "JPY", "child_factor": 0.5},
+    {"key": "link.nrt-ueno", "category": "transport_link", "label": "Bandara Narita → Ueno (Keisei Skyliner)", "unit": "per_ride", "amount": 2580, "currency": "JPY", "child_factor": 0.5, "details": {"from": "NRT", "to": "Ueno", "minutes": 45, "airport_transfer": true}},
+    {"key": "visa.waiver", "category": "visa", "label": "Visa waiver e-paspor Indonesia (pendaftaran ke Kedubes, gratis)", "unit": "per_person", "amount": 0, "currency": "IDR", "child_factor": 0, "details": {"check_official": "https://www.id.emb-japan.go.jp/"}},
+    {"key": "att.sensoji", "category": "attraction", "label": "Senso-ji & Nakamise, Asakusa", "unit": "per_person", "amount": 0, "currency": "JPY", "details": {"tags": ["temple", "free", "shopping"], "area": "Asakusa", "minutes": 120}},
+    {"key": "att.skytree", "category": "attraction", "label": "Tokyo Skytree (Tembo Deck)", "unit": "per_person", "amount": 2400, "currency": "JPY", "child_factor": 0.5, "details": {"tags": ["view"], "area": "Oshiage", "minutes": 90}},
+    {"key": "att.shibuya-sky", "category": "attraction", "label": "Shibuya Sky", "unit": "per_person", "amount": 2500, "currency": "JPY", "child_factor": 0.6, "details": {"tags": ["view", "night"], "area": "Shibuya", "minutes": 90}},
+    {"key": "att.teamlab", "category": "attraction", "label": "teamLab Planets", "unit": "per_person", "amount": 3600, "currency": "JPY", "child_factor": 0.5, "details": {"tags": ["art", "family", "rainy_day"], "area": "Toyosu", "minutes": 120}},
+    {"key": "att.meiji", "category": "attraction", "label": "Meiji Jingu & Harajuku", "unit": "per_person", "amount": 0, "currency": "JPY", "details": {"tags": ["shrine", "free", "shopping"], "area": "Harajuku", "minutes": 120}},
+    {"key": "att.tokyo-tower", "category": "attraction", "label": "Tokyo Tower (Main Deck)", "unit": "per_person", "amount": 1200, "currency": "JPY", "child_factor": 0.6, "details": {"tags": ["view"], "area": "Minato", "minutes": 60}},
+    {"key": "att.ueno-museum", "category": "attraction", "label": "Tokyo National Museum, Ueno", "unit": "per_person", "amount": 1000, "currency": "JPY", "child_factor": 0, "details": {"tags": ["museum", "history", "rainy_day"], "area": "Ueno", "minutes": 150}},
+    {"key": "att.tsukiji", "category": "attraction", "label": "Pasar luar Tsukiji", "unit": "per_person", "amount": 0, "currency": "JPY", "details": {"tags": ["food", "market", "free"], "area": "Tsukiji", "minutes": 90}},
+    {"key": "att.shinjuku-gyoen", "category": "attraction", "label": "Shinjuku Gyoen", "unit": "per_person", "amount": 500, "currency": "JPY", "child_factor": 0, "details": {"tags": ["park", "autumn_foliage"], "area": "Shinjuku", "minutes": 90}},
+    {"key": "att.imperial", "category": "attraction", "label": "East Gardens Istana Kekaisaran", "unit": "per_person", "amount": 0, "currency": "JPY", "details": {"tags": ["history", "garden", "free"], "area": "Chiyoda", "minutes": 90}},
+    {"key": "att.disneysea", "category": "attraction", "label": "Tokyo DisneySea (tiket 1 hari)", "unit": "per_person", "amount": 9400, "currency": "JPY", "child_factor": 0.6, "details": {"tags": ["theme_park", "family"], "area": "Maihama", "minutes": 600, "note": "Harga dinamis per tanggal"}},
+    {"key": "att.ghibli", "category": "attraction", "label": "Museum Ghibli (reservasi wajib)", "unit": "per_person", "amount": 1000, "currency": "JPY", "child_factor": 0.4, "details": {"tags": ["museum", "family", "anime"], "area": "Mitaka", "minutes": 150}},
+    {"key": "att.icho-namiki", "category": "attraction", "label": "Jalan Ginkgo Icho Namiki (Jingu Gaien, musim gugur)", "unit": "per_person", "amount": 0, "currency": "JPY", "details": {"tags": ["autumn_foliage", "festival", "free"], "area": "Aoyama", "minutes": 60, "season_months": [11]}}
+  ]
+}

@@ -1,0 +1,675 @@
+openapi: 3.1.0
+info:
+  title: Kora AI API
+  version: "1.0.0"
+  description: >
+    Contract between the web app and the Go API (API_SPEC.md is the human
+    summary). Money is {amount, currency}, amount in minor units. Errors are
+    RFC 9457 problem+json. Mutating requests need X-CSRF-Token (from GET /me).
+servers:
+  - url: /api/v1
+security:
+  - cookieAuth: []
+components:
+  securitySchemes:
+    cookieAuth: { type: apiKey, in: cookie, name: sid }
+    serviceToken: { type: http, scheme: bearer }
+  parameters:
+    Id: { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    Limit: { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+    Cursor: { name: cursor, in: query, schema: { type: string } }
+  responses:
+    Problem:
+      description: Error
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+  schemas:
+    Problem:
+      type: object
+      required: [type, title, status, code]
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        code:
+          type: string
+          enum: [bad_request, unauthenticated, forbidden, not_found, run_in_progress, idempotency_conflict, state_conflict,
+                 offer_expired, validation_failed, rate_limited, capacity_exhausted, internal_error, upstream_error, unavailable]
+        detail: { type: string }
+        request_id: { type: string }
+        errors: { type: array, items: { type: object, additionalProperties: { type: string } } }
+    Money:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount: { type: integer, format: int64 }
+        currency: { type: string, minLength: 3, maxLength: 3 }
+    Place:
+      type: object
+      required: [code, label]
+      properties:
+        code: { type: string }
+        label: { type: string }
+        level: { type: string, enum: [city, country] }
+    Pax:
+      type: object
+      required: [adults, children]
+      properties:
+        adults: { type: integer, minimum: 0, maximum: 9 }
+        children: { type: integer, minimum: 0, maximum: 8 }
+    DateWindow:
+      type: object
+      properties:
+        from: { type: string, format: date }
+        to: { type: string, format: date }
+        season: { type: string, enum: [spring, summer, autumn, winter, year_end] }
+        month: { type: integer, minimum: 1, maximum: 12 }
+        year: { type: integer }
+        flex_days: { type: integer }
+    Assumption:
+      type: object
+      required: [slot, reason]
+      properties:
+        slot: { type: string }
+        value: {}
+        reason: { type: string }
+        source: { type: string }
+    SpecialRequest:
+      type: object
+      required: [kind, text]
+      properties:
+        kind: { type: string }
+        text: { type: string }
+    TripState:
+      type: object
+      required: [version, pax, interests, special_requests, assumptions]
+      properties:
+        version: { type: integer }
+        origin: { $ref: "#/components/schemas/Place" }
+        destination: { $ref: "#/components/schemas/Place" }
+        budget: { $ref: "#/components/schemas/Money" }
+        budget_is_per_person: { type: boolean }
+        date_window: { $ref: "#/components/schemas/DateWindow" }
+        nights: { type: integer }
+        pax: { $ref: "#/components/schemas/Pax" }
+        interests: { type: array, items: { type: string } }
+        special_requests: { type: array, items: { $ref: "#/components/schemas/SpecialRequest" } }
+        assumptions: { type: array, items: { $ref: "#/components/schemas/Assumption" } }
+        selected_package_id: { type: string, format: uuid }
+        last_turn_clarified: { type: boolean }
+    Me:
+      type: object
+      required: [id, is_guest, locale, memory_enabled, csrf_token, quota, memory_available]
+      properties:
+        id: { type: string, format: uuid }
+        is_guest: { type: boolean }
+        email: { type: [string, "null"] }
+        display_name: { type: [string, "null"] }
+        home_city_code: { type: [string, "null"] }
+        locale: { type: string }
+        memory_enabled: { type: boolean }
+        memory_available: { type: boolean }
+        csrf_token: { type: string }
+        quota:
+          type: object
+          required: [runs_per_day, runs_remaining]
+          properties:
+            runs_per_day: { type: integer }
+            runs_remaining: { type: integer }
+    ConversationSummary:
+      type: object
+      required: [id, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: [string, "null"] }
+        created_at: { type: string, format: date-time }
+        last_message_at: { type: [string, "null"], format: date-time }
+    Conversation:
+      type: object
+      required: [id, trip_state, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: [string, "null"] }
+        trip_state: { $ref: "#/components/schemas/TripState" }
+        active_run_id: { type: [string, "null"], format: uuid }
+        last_run_id: { type: [string, "null"], format: uuid, description: "Replay its /runs/{id}/events to rebuild the workspace" }
+        selected_package_id: { type: [string, "null"], format: uuid }
+        created_at: { type: string, format: date-time }
+    Message:
+      type: object
+      required: [id, conversation_id, seq, role, content, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        conversation_id: { type: string, format: uuid }
+        seq: { type: integer }
+        role: { type: string, enum: [user, assistant, notice] }
+        content: { type: string }
+        blocks: { $ref: "#/components/schemas/MessageBlocks" }
+        run_id: { type: [string, "null"], format: uuid }
+        created_at: { type: string, format: date-time }
+    MessageBlocks:
+      type: object
+      properties:
+        packages: { type: array, items: { $ref: "#/components/schemas/PackageCard" } }
+        assumptions: { type: array, items: { $ref: "#/components/schemas/Assumption" } }
+        notices: { type: array, items: { type: string } }
+        destinations: { type: array, items: { $ref: "#/components/schemas/DestinationEstimate" } }
+        clarification:
+          type: object
+          properties:
+            question: { type: string }
+            options: { type: array, items: { type: string } }
+        blocked: { type: boolean }
+        action: { $ref: "#/components/schemas/Action" }
+    Run:
+      type: object
+      required: [id, conversation_id, status, started_at]
+      properties:
+        id: { type: string, format: uuid }
+        conversation_id: { type: string, format: uuid }
+        status: { type: string, enum: [running, completed, failed, cancelled, blocked] }
+        mode: { type: [string, "null"] }
+        started_at: { type: string, format: date-time }
+        finished_at: { type: [string, "null"], format: date-time }
+        error_code: { type: [string, "null"] }
+        stream_url: { type: string }
+    PackageCard:
+      type: object
+      required: [id, tier, title, total, feasibility]
+      properties:
+        id: { type: string, format: uuid }
+        tier: { type: string, enum: [hemat, seimbang, nyaman] }
+        title: { type: string }
+        total: { $ref: "#/components/schemas/Money" }
+        feasibility: { $ref: "#/components/schemas/Feasibility" }
+    Feasibility: { type: string, enum: [fits, tight, over_budget, unbounded] }
+    Alternative:
+      type: object
+      required: [kind, label]
+      properties:
+        kind: { type: string, enum: [shift_dates, fewer_nights, cheaper_area, other_destination, add_funds] }
+        label: { type: string }
+        saving_idr: { type: integer }
+        value: {}
+    PackageDay:
+      type: object
+      required: [day_index, title]
+      properties:
+        day_index: { type: integer }
+        date: { type: [string, "null"], format: date }
+        title: { type: string }
+        summary: { type: string }
+        area: { type: string }
+    PackageItem:
+      type: object
+      required: [id, category, title, quantity, unit_price, amount_idr, price_kind, source, priced_at, has_outbound, details]
+      properties:
+        id: { type: string, format: uuid }
+        day_index: { type: [integer, "null"] }
+        category: { type: string, enum: [flight, stay, activity, meal, local_transport, visa, insurance, other] }
+        title: { type: string }
+        quantity: { type: integer }
+        unit_price: { $ref: "#/components/schemas/Money" }
+        amount_idr: { $ref: "#/components/schemas/Money" }
+        price_kind: { type: string, enum: [live, estimate] }
+        source:
+          type: object
+          required: [label]
+          properties:
+            label: { type: string }
+            url: { type: [string, "null"] }
+        priced_at: { type: string, format: date-time }
+        expires_at: { type: [string, "null"], format: date-time }
+        has_outbound: { type: boolean }
+        details: { type: object, additionalProperties: true }
+    Package:
+      type: object
+      required: [id, tier, title, status, feasibility, total, breakdown, assumptions, alternatives, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        tier: { type: string, enum: [hemat, seimbang, nyaman] }
+        title: { type: string }
+        status: { type: string, enum: [proposed, selected, stale] }
+        feasibility: { $ref: "#/components/schemas/Feasibility" }
+        budget: { oneOf: [{ $ref: "#/components/schemas/Money" }, { type: "null" }] }
+        total: { $ref: "#/components/schemas/Money" }
+        breakdown:
+          type: object
+          required: [live, estimate, buffer, remaining, shortfall]
+          properties:
+            live: { $ref: "#/components/schemas/Money" }
+            estimate: { $ref: "#/components/schemas/Money" }
+            buffer: { $ref: "#/components/schemas/Money" }
+            remaining: { $ref: "#/components/schemas/Money" }
+            shortfall: { $ref: "#/components/schemas/Money" }
+        assumptions: { type: array, items: { $ref: "#/components/schemas/Assumption" } }
+        alternatives: { type: array, items: { $ref: "#/components/schemas/Alternative" } }
+        days: { type: array, items: { $ref: "#/components/schemas/PackageDay" } }
+        items: { type: array, items: { $ref: "#/components/schemas/PackageItem" } }
+        created_at: { type: string, format: date-time }
+    RepriceResult:
+      type: object
+      required: [package_id, changes, total_previous, total_current, feasibility]
+      properties:
+        package_id: { type: string, format: uuid }
+        new_package_id: { type: [string, "null"], format: uuid }
+        changes:
+          type: array
+          items:
+            type: object
+            required: [item_id, previous, current, status]
+            properties:
+              item_id: { type: string, format: uuid }
+              previous: { $ref: "#/components/schemas/Money" }
+              current: { $ref: "#/components/schemas/Money" }
+              status: { type: string, enum: [unchanged, changed, unavailable] }
+        total_previous: { $ref: "#/components/schemas/Money" }
+        total_current: { $ref: "#/components/schemas/Money" }
+        feasibility: { $ref: "#/components/schemas/Feasibility" }
+    DestinationEstimate:
+      type: object
+      required: [code, label, nights, flight_idr, total_idr]
+      properties:
+        code: { type: string }
+        label: { type: string }
+        month: { type: string, format: date }
+        nights: { type: integer }
+        flight_idr: { type: integer }
+        stay_idr: { type: object, additionalProperties: { type: integer } }
+        daily_idr: { type: object, additionalProperties: { type: integer } }
+        total_idr: { type: object, additionalProperties: { type: integer } }
+        fits: { type: object, additionalProperties: { type: boolean } }
+        notes: { type: array, items: { type: string } }
+    Reminder:
+      type: object
+      required: [id, kind, trigger_at, status]
+      properties:
+        id: { type: string, format: uuid }
+        conversation_id: { type: [string, "null"], format: uuid }
+        kind: { type: string, enum: [booking_window_open, price_recheck] }
+        payload: { type: object }
+        trigger_at: { type: string, format: date-time }
+        status: { type: string, enum: [pending, sent, cancelled, failed] }
+        created_at: { type: string, format: date-time }
+    City:
+      type: object
+      required: [code, label, country, airports, time_zone, currency]
+      properties:
+        code: { type: string }
+        label: { type: string }
+        country: { type: string }
+        airports: { type: array, items: { type: string } }
+        time_zone: { type: string }
+        currency: { type: string }
+        areas: { type: array, items: { type: string } }
+    Meta:
+      type: object
+      required: [api_version, build, origins, destinations, sandbox]
+      properties:
+        api_version: { type: string }
+        build: { type: string }
+        origins: { type: array, items: { $ref: "#/components/schemas/City" } }
+        destinations: { type: array, items: { $ref: "#/components/schemas/City" } }
+        currencies: { type: array, items: { type: string } }
+        sandbox: { type: boolean }
+        suppliers: { type: object, additionalProperties: { type: string } }
+        limits: { type: object, additionalProperties: true }
+    # --- Workspace (live trip canvas, streamed as NDJSON) ---------------------
+    StreamLine:
+      type: object
+      description: One line of application/x-ndjson from /runs/{id}/events. Unknown types must be ignored.
+      required: [type]
+      properties:
+        seq: { type: integer }
+        type: { type: string, description: "state.reset | state.patch | ui.action | message.delta | run.completed | run.failed | ping | (SSE event names)" }
+        data: { type: object, additionalProperties: true }
+    PatchOp:
+      type: object
+      required: [op, path]
+      properties:
+        op: { type: string, enum: [add, replace, remove] }
+        path: { type: string, description: "RFC 6901 JSON pointer; /- appends to an array" }
+        value: {}
+    UIAction:
+      type: object
+      required: [action]
+      properties:
+        action: { type: string, enum: [focus, highlight] }
+        view: { type: string, enum: [brief, flights, stays, itinerary, packages, destinations] }
+        reason: { type: string }
+        target: { type: object, properties: { kind: { type: string }, id: { type: string }, tier: { type: string } } }
+    EffortDecision:
+      type: object
+      required: [role, effort, mode, reason]
+      properties:
+        role: { type: string }
+        effort: { type: string, enum: [minimal, low, medium, high] }
+        mode: { type: string, enum: [auto, fixed, escalated] }
+        reason: { type: string }
+        score: { type: integer }
+    FlightCard:
+      type: object
+      required: [id, carriers, stops, price_idr, kind, sandbox, used_by]
+      properties:
+        id: { type: string }
+        carriers: { type: array, items: { type: string } }
+        depart: { type: string }
+        arrive: { type: string }
+        return_depart: { type: string }
+        return_arrive: { type: string }
+        arrival_date: { type: string }
+        stops: { type: integer }
+        hours: { type: number }
+        baggage_kg: { type: integer }
+        price_idr: { type: integer }
+        kind: { type: string, enum: [live, estimate] }
+        sandbox: { type: boolean }
+        used_by: { type: array, items: { type: string } }
+    StayCard:
+      type: object
+      required: [id, name, total_idr, sandbox, used_by]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        area: { type: string }
+        stars: { type: integer }
+        rating: { type: number }
+        station_m: { type: integer }
+        per_night_idr: { type: integer }
+        total_idr: { type: integer }
+        check_in: { type: string }
+        check_out: { type: string }
+        sandbox: { type: boolean }
+        used_by: { type: array, items: { type: string } }
+    ActivityCard:
+      type: object
+      required: [id, label, per_person_idr, tags]
+      properties: { id: { type: string }, label: { type: string }, per_person_idr: { type: integer }, tags: { type: array, items: { type: string } }, area: { type: string } }
+    ItineraryDay:
+      type: object
+      required: [day_index, title, activities]
+      properties: { day_index: { type: integer }, date: { type: string }, title: { type: string }, summary: { type: string }, area: { type: string }, activities: { type: array, items: { type: string } } }
+    WorkspacePackage:
+      type: object
+      required: [id, tier, title, status, feasibility, draft, total, live, estimate, buffer, remaining, shortfall, bar, nights, flight, stay, recommended, alternatives, sandbox]
+      properties:
+        id: { type: string }
+        tier: { type: string, enum: [hemat, seimbang, nyaman] }
+        title: { type: string }
+        status: { type: string }
+        feasibility: { $ref: "#/components/schemas/Feasibility" }
+        draft: { type: boolean }
+        total: { $ref: "#/components/schemas/Money" }
+        live: { $ref: "#/components/schemas/Money" }
+        estimate: { $ref: "#/components/schemas/Money" }
+        buffer: { $ref: "#/components/schemas/Money" }
+        remaining: { $ref: "#/components/schemas/Money" }
+        shortfall: { $ref: "#/components/schemas/Money" }
+        budget: { $ref: "#/components/schemas/Money" }
+        bar:
+          type: object
+          required: [live_pct, estimate_pct, buffer_pct, remaining_pct, over_pct]
+          properties: { live_pct: { type: integer }, estimate_pct: { type: integer }, buffer_pct: { type: integer }, remaining_pct: { type: integer }, over_pct: { type: integer } }
+        nights: { type: integer }
+        flight: { type: string }
+        stay: { type: string }
+        recommended: { type: boolean }
+        alternatives: { type: array, items: { $ref: "#/components/schemas/Alternative" } }
+        sandbox: { type: boolean }
+    Action:
+      type: object
+      required: [type, payload]
+      properties:
+        type: { type: string, enum: [set_slot, shift_dates, prefer_area, near_station, tier_shift, ask] }
+        payload: { type: object, additionalProperties: true }
+        label: { type: string }
+    Suggestion:
+      type: object
+      required: [id, label, action]
+      properties: { id: { type: string }, label: { type: string }, action: { $ref: "#/components/schemas/Action" } }
+    Workspace:
+      type: object
+      description: Full canvas state carried by state.reset; state.patch ops apply to it.
+      required: [run, phase, effort, trip, flights, stays, activities, itinerary, packages, destinations, suggestions, notices]
+      properties:
+        run: { type: object, properties: { id: { type: string }, status: { type: string }, mode: { type: [string, "null"] } } }
+        phase: { type: object, properties: { current: { type: string }, label: { type: string }, history: { type: array, items: { type: string } } } }
+        effort: { type: object, additionalProperties: { $ref: "#/components/schemas/EffortDecision" } }
+        trip: { $ref: "#/components/schemas/TripState" }
+        flights:
+          type: object
+          required: [status, items]
+          properties:
+            status: { type: string, enum: [idle, searching, ready, estimate, empty] }
+            items: { type: array, items: { $ref: "#/components/schemas/FlightCard" } }
+            estimate: { type: object, properties: { median_idr_per_adult: { type: integer }, month: { type: string }, note: { type: string } } }
+        stays:
+          type: object
+          required: [status, items]
+          properties:
+            status: { type: string, enum: [idle, searching, ready, empty] }
+            items: { type: array, items: { $ref: "#/components/schemas/StayCard" } }
+        activities: { type: array, items: { $ref: "#/components/schemas/ActivityCard" } }
+        itinerary: { type: array, items: { $ref: "#/components/schemas/ItineraryDay" } }
+        packages: { type: array, items: { $ref: "#/components/schemas/WorkspacePackage" } }
+        destinations: { type: array, items: { $ref: "#/components/schemas/DestinationEstimate" } }
+        recommendation: { type: [object, "null"], properties: { tier: { type: string }, source: { type: string }, reason: { type: string } } }
+        suggestions: { type: array, items: { $ref: "#/components/schemas/Suggestion" } }
+        notices: { type: array, items: { type: string } }
+        clarification: { type: [object, "null"], properties: { question: { type: string }, options: { type: array, items: { type: string } } } }
+    # SSE payloads (event name → data), API_SPEC §6.
+    SSEStatus: { type: object, required: [phase, label], properties: { phase: { type: string }, label: { type: string } } }
+    SSEToolStarted: { type: object, required: [tool, label], properties: { tool: { type: string }, label: { type: string } } }
+    SSEToolFinished: { type: object, required: [tool, ok, summary], properties: { tool: { type: string }, ok: { type: boolean }, summary: { type: string } } }
+    SSEPackagesReady: { type: object, required: [packages], properties: { packages: { type: array, items: { $ref: "#/components/schemas/PackageCard" } } } }
+    SSEMessageDelta: { type: object, required: [text], properties: { text: { type: string } } }
+    SSEMessageCompleted: { type: object, required: [message_id], properties: { message_id: { type: string, format: uuid } } }
+    SSENotice: { type: object, required: [code, text], properties: { code: { type: string }, text: { type: string } } }
+    SSERunFailed:
+      type: object
+      required: [run_id, code, message, retryable]
+      properties: { run_id: { type: string }, code: { type: string }, message: { type: string }, retryable: { type: boolean } }
+
+paths:
+  /auth/guest:
+    post:
+      summary: Create (or return) a guest session
+      security: []
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Me" } } } }
+        "200": { description: Existing session, content: { application/json: { schema: { $ref: "#/components/schemas/Me" } } } }
+        "429": { $ref: "#/components/responses/Problem" }
+  /auth/magic-link:
+    post:
+      summary: Email a login link (always 202)
+      security: []
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [email], properties: { email: { type: string, format: email, maxLength: 254 } } } } } }
+      responses:
+        "202": { description: Accepted }
+        "422": { $ref: "#/components/responses/Problem" }
+  /auth/magic-link/verify:
+    post:
+      summary: Exchange a magic-link token for a session (guest data is merged)
+      security: []
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [token], properties: { token: { type: string } } } } } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Me" } } } }
+        "422": { $ref: "#/components/responses/Problem" }
+  /auth/logout:
+    post: { summary: Revoke the session, responses: { "204": { description: Revoked } } }
+  /me:
+    get:
+      summary: Profile, CSRF token and quota
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Me" } } } }, "401": { $ref: "#/components/responses/Problem" } }
+    patch:
+      summary: Update profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                display_name: { type: string, maxLength: 80 }
+                home_city_code: { type: string }
+                locale: { type: string, enum: [id, en] }
+                memory_enabled: { type: boolean }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Me" } } } }, "422": { $ref: "#/components/responses/Problem" } }
+    delete: { summary: Request account deletion, responses: { "202": { description: Accepted } } }
+  /me/export:
+    get: { summary: Export all user data, responses: { "200": { description: JSON export, content: { application/json: { schema: { type: object } } } } } }
+  /me/memory:
+    get:
+      summary: Remembered facts
+      responses:
+        "200":
+          description: OK
+          content: { application/json: { schema: { type: object, properties: { items: { type: array, items: { type: object } }, enabled: { type: boolean }, note: { type: string } } } } }
+    delete: { summary: Forget everything (pending OpenPersona scope deletion), responses: { "204": { description: Deleted }, "503": { $ref: "#/components/responses/Problem" } } }
+  /me/memory/{id}:
+    delete: { summary: Forget one fact, parameters: [{ $ref: "#/components/parameters/Id" }], responses: { "204": { description: Deleted }, "503": { $ref: "#/components/responses/Problem" } } }
+  /conversations:
+    get:
+      summary: List conversations
+      parameters: [{ $ref: "#/components/parameters/Limit" }, { $ref: "#/components/parameters/Cursor" }]
+      responses:
+        "200":
+          description: OK
+          content: { application/json: { schema: { type: object, required: [items], properties: { items: { type: array, items: { $ref: "#/components/schemas/ConversationSummary" } }, next_cursor: { type: [string, "null"] } } } } }
+    post:
+      summary: Create a conversation
+      responses: { "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Conversation" } } } } }
+  /conversations/{id}:
+    parameters: [{ $ref: "#/components/parameters/Id" }]
+    get: { summary: Detail with trip state and active run, responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Conversation" } } } }, "404": { $ref: "#/components/responses/Problem" } } }
+    patch:
+      summary: Rename
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [title], properties: { title: { type: string, maxLength: 120 } } } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Conversation" } } } } }
+    delete: { summary: Delete, responses: { "204": { description: Deleted } } }
+  /conversations/{id}/messages:
+    parameters: [{ $ref: "#/components/parameters/Id" }]
+    get:
+      summary: Messages after a sequence number (cursor = seq)
+      parameters: [{ $ref: "#/components/parameters/Limit" }, { $ref: "#/components/parameters/Cursor" }]
+      responses:
+        "200":
+          description: OK
+          content: { application/json: { schema: { type: object, required: [items], properties: { items: { type: array, items: { $ref: "#/components/schemas/Message" } }, next_cursor: { type: [string, "null"] } } } } }
+    post:
+      summary: Send a message and start a run
+      parameters:
+        - { name: Idempotency-Key, in: header, required: true, schema: { type: string, maxLength: 200 } }
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [content], properties: { content: { type: string, minLength: 1, maxLength: 4000 } } } } } }
+      responses:
+        "202":
+          description: Run started
+          content: { application/json: { schema: { type: object, required: [message, run], properties: { message: { $ref: "#/components/schemas/Message" }, run: { $ref: "#/components/schemas/Run" } } } } }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+  /conversations/{id}/trip-state:
+    parameters: [{ $ref: "#/components/parameters/Id" }]
+    patch:
+      summary: Correct slots directly (no run)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version, set]
+              properties:
+                version: { type: integer }
+                set:
+                  type: object
+                  properties:
+                    nights: { type: integer, minimum: 1, maximum: 60 }
+                    pax: { type: object, properties: { adults: { type: integer }, children: { type: integer } } }
+                    budget: { $ref: "#/components/schemas/Money" }
+                    origin: { type: string }
+                    destination: { type: string }
+      responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/TripState" } } } }, "409": { $ref: "#/components/responses/Problem" } }
+  /conversations/{id}/actions:
+    parameters: [{ $ref: "#/components/parameters/Id" }]
+    post:
+      summary: Structured action from the web canvas; patches the trip state and starts a run
+      parameters:
+        - { name: Idempotency-Key, in: header, required: true, schema: { type: string, maxLength: 200 } }
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/Action" } } } }
+      responses:
+        "202":
+          description: Run started
+          content: { application/json: { schema: { type: object, required: [message, run], properties: { message: { $ref: "#/components/schemas/Message" }, run: { $ref: "#/components/schemas/Run" } } } } }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+  /conversations/{id}/packages:
+    get:
+      summary: Packages of a conversation, newest first
+      parameters: [{ $ref: "#/components/parameters/Id" }, { $ref: "#/components/parameters/Limit" }]
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: object, properties: { items: { type: array, items: { $ref: "#/components/schemas/Package" } } } } } } } }
+  /runs/{id}:
+    get: { summary: Run status, parameters: [{ $ref: "#/components/parameters/Id" }], responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Run" } } } } } }
+  /runs/{id}/stream:
+    get:
+      summary: Server-Sent Events of a run (replay with Last-Event-ID)
+      parameters:
+        - { $ref: "#/components/parameters/Id" }
+        - { name: Last-Event-ID, in: header, schema: { type: string } }
+      responses: { "200": { description: text/event-stream, content: { text/event-stream: { schema: { type: string } } } } }
+  /runs/{id}/events:
+    get:
+      summary: Run events as NDJSON (workspace state stream); resume with ?after=<seq>
+      parameters:
+        - { $ref: "#/components/parameters/Id" }
+        - { name: after, in: query, schema: { type: integer, minimum: 0 } }
+      responses: { "200": { description: "application/x-ndjson, one StreamLine per line", content: { application/x-ndjson: { schema: { $ref: "#/components/schemas/StreamLine" } } } } }
+  /runs/{id}/cancel:
+    post: { summary: Cancel a running run, parameters: [{ $ref: "#/components/parameters/Id" }], responses: { "202": { description: Accepted } } }
+  /packages/{id}:
+    get: { summary: Full package, parameters: [{ $ref: "#/components/parameters/Id" }], responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Package" } } } }, "404": { $ref: "#/components/responses/Problem" } } }
+  /packages/{id}/select:
+    post: { summary: Mark as selected, parameters: [{ $ref: "#/components/parameters/Id" }], responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Package" } } } } } }
+  /packages/{id}/reprice:
+    post:
+      summary: Re-check live prices; creates a new package, the old one becomes stale
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/RepriceResult" } } } }
+        "429": { $ref: "#/components/responses/Problem" }
+        "502": { $ref: "#/components/responses/Problem" }
+  /packages/{id}/items/{item_id}/outbound:
+    post:
+      summary: Record a click and return the supplier link
+      parameters: [{ $ref: "#/components/parameters/Id" }, { name: item_id, in: path, required: true, schema: { type: string, format: uuid } }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: object, required: [url], properties: { url: { type: string } } } } } }
+        "410": { $ref: "#/components/responses/Problem" }
+  /reminders:
+    get: { summary: List reminders, responses: { "200": { description: OK, content: { application/json: { schema: { type: object, properties: { items: { type: array, items: { $ref: "#/components/schemas/Reminder" } } } } } } } } }
+    post:
+      summary: Create a reminder (registered users)
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [conversation_id, kind], properties: { conversation_id: { type: string, format: uuid }, kind: { type: string, enum: [booking_window_open, price_recheck] } } } } } }
+      responses: { "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Reminder" } } } }, "403": { $ref: "#/components/responses/Problem" } }
+  /reminders/{id}:
+    delete: { summary: Cancel, parameters: [{ $ref: "#/components/parameters/Id" }], responses: { "204": { description: Cancelled } } }
+  /feedback:
+    post:
+      summary: Rate a message or package
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rating]
+              properties:
+                message_id: { type: string, format: uuid }
+                package_id: { type: string, format: uuid }
+                rating: { type: integer, enum: [-1, 1] }
+                reason: { type: string, enum: [price_wrong, not_relevant, too_expensive, missing_info, other] }
+                comment: { type: string, maxLength: 2000 }
+      responses: { "201": { description: Stored } }
+  /meta:
+    get: { summary: Supported places, limits, version, security: [], responses: { "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Meta" } } } } } }

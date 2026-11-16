@@ -1,0 +1,44 @@
+{
+  "destination_code": "OSA",
+  "status": "draft_unverified",
+  "source_label": "DRAF Kora (belum diverifikasi kurator) — disusun 15 Nov 2026",
+  "verified_at": "2026-11-15",
+  "note": "Placeholder values so the system runs end to end. A travel-agent curator must verify every row and replace source_label/verified_at (IMPLEMENTATION_PLAN F0-7).",
+  "norms": [
+    {"key": "meal.hemat", "category": "meal", "tier": "hemat", "label": "Makan hemat (konbini, gyudon, ramen)", "unit": "per_meal", "amount": 900, "currency": "JPY", "child_factor": 0.6},
+    {"key": "meal.sedang", "category": "meal", "tier": "sedang", "label": "Makan sedang (restoran lokal, set menu)", "unit": "per_meal", "amount": 1800, "currency": "JPY", "child_factor": 0.6},
+    {"key": "meal.nyaman", "category": "meal", "tier": "nyaman", "label": "Makan nyaman (izakaya, restoran pilihan)", "unit": "per_meal", "amount": 4000, "currency": "JPY", "child_factor": 0.6},
+
+    {"key": "local.hemat", "category": "local_transport_daily", "tier": "hemat", "label": "Transport lokal harian (metro, jalan kaki)", "unit": "per_day", "amount": 700, "currency": "JPY", "child_factor": 0.5},
+    {"key": "local.sedang", "category": "local_transport_daily", "tier": "sedang", "label": "Transport lokal harian (metro + kereta JR)", "unit": "per_day", "amount": 1100, "currency": "JPY", "child_factor": 0.5},
+    {"key": "local.nyaman", "category": "local_transport_daily", "tier": "nyaman", "label": "Transport lokal harian (termasuk taksi sesekali)", "unit": "per_day", "amount": 2800, "currency": "JPY", "child_factor": 0.5},
+
+    {"key": "link.kix-namba", "category": "transport_link", "label": "Bandara KIX → Namba (Nankai Airport Express)", "unit": "per_ride", "amount": 1100, "currency": "JPY", "child_factor": 0.5, "details": {"from": "KIX", "to": "Namba", "minutes": 45, "airport_transfer": true}},
+    {"key": "link.namba-nara", "category": "transport_link", "label": "Osaka Namba → Nara (Kintetsu, sekali jalan)", "unit": "per_ride", "amount": 680, "currency": "JPY", "child_factor": 0.5, "details": {"from": "Namba", "to": "Nara", "minutes": 40}},
+    {"key": "link.osaka-kyoto", "category": "transport_link", "label": "Osaka → Kyoto (JR Special Rapid, sekali jalan)", "unit": "per_ride", "amount": 580, "currency": "JPY", "child_factor": 0.5, "details": {"from": "Osaka", "to": "Kyoto", "minutes": 30}},
+
+    {"key": "visa.waiver", "category": "visa", "label": "Visa waiver e-paspor Indonesia (pendaftaran ke Kedubes, gratis)", "unit": "per_person", "amount": 0, "currency": "IDR", "child_factor": 0, "details": {"requires": "e-paspor; pendaftaran sebelum berangkat", "check_official": "https://www.id.emb-japan.go.jp/"}},
+
+    {"key": "att.osaka-castle", "category": "attraction", "label": "Menara Utama Kastil Osaka", "unit": "per_person", "amount": 600, "currency": "JPY", "child_factor": 0, "details": {"tags": ["castle", "history", "autumn_foliage"], "area": "Osaka-jo", "minutes": 120}},
+    {"key": "att.dotonbori", "category": "attraction", "label": "Dotonbori & Shinsaibashi (jalan-jalan, kuliner)", "unit": "per_person", "amount": 0, "currency": "JPY", "details": {"tags": ["food", "nightlife", "shopping", "free"], "area": "Namba", "minutes": 180}},
+    {"key": "att.kuromon", "category": "attraction", "label": "Pasar Kuromon", "unit": "per_person", "amount": 0, "currency": "JPY", "details": {"tags": ["food", "market", "free"], "area": "Namba", "minutes": 90}},
+    {"key": "att.umeda-sky", "category": "attraction", "label": "Umeda Sky Building — Floating Garden Observatory", "unit": "per_person", "amount": 2000, "currency": "JPY", "child_factor": 0.5, "details": {"tags": ["view", "night"], "area": "Umeda", "minutes": 90}},
+    {"key": "att.usj", "category": "attraction", "label": "Universal Studios Japan (tiket 1 hari)", "unit": "per_person", "amount": 9800, "currency": "JPY", "child_factor": 0.65, "details": {"tags": ["theme_park", "family"], "area": "Bay Area", "minutes": 600, "note": "Harga dinamis per tanggal"}},
+    {"key": "att.kaiyukan", "category": "attraction", "label": "Akuarium Osaka Kaiyukan", "unit": "per_person", "amount": 2700, "currency": "JPY", "child_factor": 0.5, "details": {"tags": ["family", "aquarium"], "area": "Bay Area", "minutes": 150}},
+    {"key": "att.tsutenkaku", "category": "attraction", "label": "Menara Tsutenkaku & Shinsekai", "unit": "per_person", "amount": 1200, "currency": "JPY", "child_factor": 0.5, "details": {"tags": ["view", "food", "retro"], "area": "Shinsekai", "minutes": 120}},
+    {"key": "att.harukas", "category": "attraction", "label": "Abeno Harukas 300 Observatory", "unit": "per_person", "amount": 2000, "currency": "JPY", "child_factor": 0.5, "details": {"tags": ["view"], "area": "Tennoji", "minutes": 90}},
+    {"key": "att.shitennoji", "category": "attraction", "label": "Kuil Shitenno-ji (area pagoda)", "unit": "per_person", "amount": 300, "currency": "JPY", "child_factor": 0.5, "details": {"tags": ["temple", "history"], "area": "Tennoji", "minutes": 60}},
+    {"key": "att.sumiyoshi", "category": "attraction", "label": "Sumiyoshi Taisha", "unit": "per_person", "amount": 0, "currency": "JPY", "details": {"tags": ["shrine", "history", "free"], "area": "Sumiyoshi", "minutes": 60}},
+    {"key": "att.namba-yasaka", "category": "attraction", "label": "Kuil Namba Yasaka (kepala singa)", "unit": "per_person", "amount": 0, "currency": "JPY", "details": {"tags": ["shrine", "free", "photo"], "area": "Namba", "minutes": 30}},
+    {"key": "att.hozenji", "category": "attraction", "label": "Hozenji Yokocho", "unit": "per_person", "amount": 0, "currency": "JPY", "details": {"tags": ["temple", "free", "night"], "area": "Namba", "minutes": 30}},
+    {"key": "att.minoo", "category": "attraction", "label": "Taman Minoo & air terjun (dedaunan musim gugur)", "unit": "per_person", "amount": 0, "currency": "JPY", "details": {"tags": ["nature", "autumn_foliage", "hiking", "free"], "area": "Minoo", "minutes": 240}},
+    {"key": "att.expo-park", "category": "attraction", "label": "Expo '70 Commemorative Park", "unit": "per_person", "amount": 260, "currency": "JPY", "child_factor": 0.3, "details": {"tags": ["park", "autumn_foliage"], "area": "Suita", "minutes": 150}},
+    {"key": "att.museum-history", "category": "attraction", "label": "Osaka Museum of History", "unit": "per_person", "amount": 600, "currency": "JPY", "child_factor": 0, "details": {"tags": ["museum", "history", "rainy_day"], "area": "Osaka-jo", "minutes": 90}},
+    {"key": "att.cupnoodles", "category": "attraction", "label": "Cupnoodles Museum Ikeda (buat cup noodle sendiri)", "unit": "per_person", "amount": 500, "currency": "JPY", "child_factor": 1, "details": {"tags": ["family", "museum", "rainy_day"], "area": "Ikeda", "minutes": 90}},
+    {"key": "att.tempozan", "category": "attraction", "label": "Bianglala Tempozan", "unit": "per_person", "amount": 900, "currency": "JPY", "child_factor": 1, "details": {"tags": ["view", "family"], "area": "Bay Area", "minutes": 30}},
+    {"key": "att.spa-world", "category": "attraction", "label": "Spa World (onsen kota)", "unit": "per_person", "amount": 1500, "currency": "JPY", "child_factor": 0.7, "details": {"tags": ["onsen", "relax", "rainy_day"], "area": "Shinsekai", "minutes": 180}},
+    {"key": "att.nara-todaiji", "category": "attraction", "label": "Todai-ji & Taman Rusa Nara (day trip)", "unit": "per_person", "amount": 800, "currency": "JPY", "child_factor": 0.5, "details": {"tags": ["temple", "history", "day_trip", "family"], "area": "Nara", "minutes": 300}},
+    {"key": "att.kishiwada-danjiri", "category": "attraction", "label": "Festival Kishiwada Danjiri (menonton gratis)", "unit": "per_person", "amount": 0, "currency": "JPY", "details": {"tags": ["festival", "autumn", "free"], "area": "Kishiwada", "minutes": 240, "season_months": [9, 10], "note": "Tanggal berubah tiap tahun; cek kalender festival tahun berjalan"}},
+    {"key": "att.midosuji-autumn", "category": "attraction", "label": "Midosuji Autumn Party (parade jalan)", "unit": "per_person", "amount": 0, "currency": "JPY", "details": {"tags": ["festival", "autumn", "free"], "area": "Namba", "minutes": 180, "season_months": [11], "note": "Tanggal berubah tiap tahun"}}
+  ]
+}

@@ -1,0 +1,78 @@
+# Local stack: Redis, api, worker, web. The database is Neon (NEON_DB_URL in
+# the root .env). Apply db/schema.sql and db/seed.sql to Neon first.
+#
+#   docker compose up --build                  # from the repo root (compose.yaml includes this file)
+#   docker compose --profile localdb up        # use a local Postgres instead of Neon
+#   docker compose --profile memory up         # also run `openpersona serve` (memory stays off by default)
+name: kora
+
+x-go-env: &go-env
+  env_file: ../../.env
+  environment:
+    APP_ENV: ${APP_ENV:-local}
+    APP_PORT: "8080"
+    # Public addresses; override in the root .env for a server deploy.
+    APP_PUBLIC_URL: ${APP_PUBLIC_URL:-http://localhost:8080}
+    APP_WEB_ORIGIN: ${APP_WEB_ORIGIN:-http://localhost:3000}
+    REDIS_URL: redis://redis:6379/0
+    # DB_URL overrides NEON_DB_URL when set (e.g. the localdb profile).
+    DB_URL: ${DB_URL:-}
+    MEMORY_URL: http://openpersona:8090
+  # Lets api/worker reach a Lab (or other tools) running on the host, e.g.
+  # LAB_WS_URL=ws://host.docker.internal:8000/api/agent-lab/ws
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+    ports: ["127.0.0.1:6379:6379"]
+
+  api:
+    <<: *go-env
+    build: { context: ../.., dockerfile: deploy/docker/go.Dockerfile, target: api }
+    restart: unless-stopped
+    depends_on: { redis: { condition: service_healthy } }
+    # BIND_ADDR=0.0.0.0 publishes api/web on a server; redis always stays on loopback.
+    ports: ["${BIND_ADDR:-127.0.0.1}:8080:8080"]
+
+  worker:
+    <<: *go-env
+    build: { context: ../.., dockerfile: deploy/docker/go.Dockerfile, target: worker }
+    restart: unless-stopped
+    depends_on: { redis: { condition: service_healthy } }
+
+  web:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/web.Dockerfile
+      args: { NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:8080}" }
+    restart: unless-stopped
+    depends_on: [api]
+    ports: ["${BIND_ADDR:-127.0.0.1}:3000:3000"]
+
+  postgres:
+    profiles: [localdb]
+    image: postgres:17
+    environment: { POSTGRES_PASSWORD: kora, POSTGRES_DB: kora }
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../../db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ../../db/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    ports: ["127.0.0.1:5432:5432"]
+
+  openpersona:
+    profiles: [memory]
+    build: { context: ../.., dockerfile: deploy/docker/openpersona.Dockerfile }
+    env_file: ../../.env
+    volumes: [memdata:/data]
+
+volumes:
+  pgdata:
+  memdata:

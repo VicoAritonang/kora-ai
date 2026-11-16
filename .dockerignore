@@ -1,0 +1,10 @@
+# Build context: only source; never secrets or local build output.
+**/node_modules
+**/.next
+*.pem
+.env
+.env.*
+!.env.example
+eval/reports
+**/*.tsbuildinfo
+.git

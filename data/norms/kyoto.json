@@ -1,0 +1,30 @@
+{
+  "destination_code": "UKY",
+  "status": "draft_unverified",
+  "source_label": "DRAF Kora (belum diverifikasi kurator) — disusun 15 Nov 2026",
+  "verified_at": "2026-11-15",
+  "note": "Placeholder values; curator verification required (IMPLEMENTATION_PLAN P2-14).",
+  "norms": [
+    {"key": "meal.hemat", "category": "meal", "tier": "hemat", "label": "Makan hemat", "unit": "per_meal", "amount": 1000, "currency": "JPY", "child_factor": 0.6},
+    {"key": "meal.sedang", "category": "meal", "tier": "sedang", "label": "Makan sedang", "unit": "per_meal", "amount": 2000, "currency": "JPY", "child_factor": 0.6},
+    {"key": "meal.nyaman", "category": "meal", "tier": "nyaman", "label": "Makan nyaman (kaiseki ringan, restoran pilihan)", "unit": "per_meal", "amount": 4500, "currency": "JPY", "child_factor": 0.6},
+    {"key": "local.hemat", "category": "local_transport_daily", "tier": "hemat", "label": "Transport lokal harian (bus kota, jalan kaki)", "unit": "per_day", "amount": 800, "currency": "JPY", "child_factor": 0.5},
+    {"key": "local.sedang", "category": "local_transport_daily", "tier": "sedang", "label": "Transport lokal harian (bus + subway)", "unit": "per_day", "amount": 1200, "currency": "JPY", "child_factor": 0.5},
+    {"key": "local.nyaman", "category": "local_transport_daily", "tier": "nyaman", "label": "Transport lokal harian (termasuk taksi)", "unit": "per_day", "amount": 3000, "currency": "JPY", "child_factor": 0.5},
+    {"key": "link.kix-kyoto", "category": "transport_link", "label": "Bandara KIX → Kyoto (JR Haruka, non-reserved)", "unit": "per_ride", "amount": 3640, "currency": "JPY", "child_factor": 0.5, "details": {"from": "KIX", "to": "Kyoto Station", "minutes": 80, "airport_transfer": true}},
+    {"key": "visa.waiver", "category": "visa", "label": "Visa waiver e-paspor Indonesia (pendaftaran ke Kedubes, gratis)", "unit": "per_person", "amount": 0, "currency": "IDR", "child_factor": 0, "details": {"check_official": "https://www.id.emb-japan.go.jp/"}},
+    {"key": "att.fushimi-inari", "category": "attraction", "label": "Fushimi Inari Taisha", "unit": "per_person", "amount": 0, "currency": "JPY", "details": {"tags": ["shrine", "hiking", "free", "photo"], "area": "Fushimi", "minutes": 150}},
+    {"key": "att.kiyomizu", "category": "attraction", "label": "Kiyomizu-dera", "unit": "per_person", "amount": 500, "currency": "JPY", "child_factor": 0.4, "details": {"tags": ["temple", "autumn_foliage", "view"], "area": "Higashiyama", "minutes": 120}},
+    {"key": "att.kinkakuji", "category": "attraction", "label": "Kinkaku-ji (Paviliun Emas)", "unit": "per_person", "amount": 500, "currency": "JPY", "child_factor": 0.6, "details": {"tags": ["temple", "photo"], "area": "Kita", "minutes": 60}},
+    {"key": "att.ginkakuji", "category": "attraction", "label": "Ginkaku-ji & Jalan Filsuf", "unit": "per_person", "amount": 500, "currency": "JPY", "child_factor": 0.6, "details": {"tags": ["temple", "autumn_foliage", "walk"], "area": "Higashiyama", "minutes": 120}},
+    {"key": "att.arashiyama", "category": "attraction", "label": "Hutan Bambu Arashiyama", "unit": "per_person", "amount": 0, "currency": "JPY", "details": {"tags": ["nature", "free", "photo"], "area": "Arashiyama", "minutes": 90}},
+    {"key": "att.tenryuji", "category": "attraction", "label": "Taman Tenryu-ji", "unit": "per_person", "amount": 500, "currency": "JPY", "child_factor": 0.6, "details": {"tags": ["temple", "garden", "autumn_foliage"], "area": "Arashiyama", "minutes": 60}},
+    {"key": "att.nijo", "category": "attraction", "label": "Kastil Nijo", "unit": "per_person", "amount": 1300, "currency": "JPY", "child_factor": 0.3, "details": {"tags": ["castle", "history"], "area": "Nakagyo", "minutes": 90}},
+    {"key": "att.sanjusangendo", "category": "attraction", "label": "Sanjusangen-do", "unit": "per_person", "amount": 600, "currency": "JPY", "child_factor": 0.5, "details": {"tags": ["temple", "history"], "area": "Higashiyama", "minutes": 45}},
+    {"key": "att.nishiki", "category": "attraction", "label": "Pasar Nishiki", "unit": "per_person", "amount": 0, "currency": "JPY", "details": {"tags": ["food", "market", "free"], "area": "Nakagyo", "minutes": 90}},
+    {"key": "att.gion", "category": "attraction", "label": "Gion & Hanamikoji (jalan sore)", "unit": "per_person", "amount": 0, "currency": "JPY", "details": {"tags": ["culture", "free", "night"], "area": "Gion", "minutes": 90}},
+    {"key": "att.tofukuji", "category": "attraction", "label": "Tofuku-ji (jembatan Tsutenkyo, musim gugur)", "unit": "per_person", "amount": 1000, "currency": "JPY", "child_factor": 0.3, "details": {"tags": ["temple", "autumn_foliage"], "area": "Higashiyama", "minutes": 60, "season_months": [11]}},
+    {"key": "att.eikando", "category": "attraction", "label": "Eikan-do (iluminasi musim gugur)", "unit": "per_person", "amount": 1000, "currency": "JPY", "child_factor": 0.4, "details": {"tags": ["temple", "autumn_foliage", "night"], "area": "Higashiyama", "minutes": 60, "season_months": [11]}},
+    {"key": "att.jidai-matsuri", "category": "attraction", "label": "Festival Jidai Matsuri (parade, menonton gratis)", "unit": "per_person", "amount": 0, "currency": "JPY", "details": {"tags": ["festival", "autumn", "free"], "area": "Heian Jingu", "minutes": 180, "season_months": [10], "note": "Biasanya 22 Oktober; cek kalender tahun berjalan"}}
+  ]
+}
